@@ -46,7 +46,7 @@ public class PopupROI extends JPopupMenu {
 	 * @param canvas
 	 */
 	public PopupROI(final ROI2D roi, MouseEvent e, final Point2D imagePoint, final IcyCanvas canvas) {
-		super(roi.getName());
+		super("ROI");
 		Border titleUnderline = BorderFactory.createMatteBorder(1, 0, 0, 0, getForeground());
 		TitledBorder labelBorder = BorderFactory.createTitledBorder(titleUnderline, getLabel(), TitledBorder.CENTER, TitledBorder.ABOVE_TOP, super.getFont().deriveFont(Font.BOLD),
 				getForeground());
