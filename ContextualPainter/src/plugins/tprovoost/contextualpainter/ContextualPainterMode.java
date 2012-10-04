@@ -7,53 +7,48 @@ import icy.gui.main.MainEvent;
 import icy.gui.viewer.Viewer;
 import icy.main.Icy;
 import icy.painter.Painter;
-import icy.plugin.abstract_.PluginActionable;
+import icy.plugin.abstract_.Plugin;
 import icy.plugin.interface_.PluginDaemon;
 import icy.sequence.Sequence;
-import icy.system.thread.ThreadUtil;
 
-public class ContextualPainterMode extends PluginActionable implements PluginDaemon {
+public class ContextualPainterMode extends Plugin implements PluginDaemon {
 
 	public static boolean instanced = false;
 	MainAdapter mainadapter = new MainAdapter() {
+		
 		@Override
-		public void sequenceOpened(final MainEvent event) {
-			ThreadUtil.bgRun(new Runnable() {
-
-				@Override
-				public void run() {
-					Sequence s = ((Sequence) event.getSource());
-					ContextualPainter ap = new ContextualPainter();
-					s.addPainter(ap);
-					for (Viewer v : s.getViewers()) {
-						ThreadUtil.sleep(2000);
-						IcyCanvas canvas = v.getCanvas();
-						if (canvas != null) {
-							Layer l = canvas.getLayer(ap);
-							if (l != null)
-								l.setName("Contextual");
-						}
-					}
-				}
-			});
-		}
+		public void viewerOpened(MainEvent event) {
+			Viewer v = (Viewer)event.getSource();
+			Sequence s = v.getSequence();
+			for (Painter p : s.getPainters() ){ 
+				if (p instanceof ContextualPainter)
+					return;
+			}
+			ContextualPainter cp = new ContextualPainter();
+			s.addPainter(cp);
+			IcyCanvas canvas = v.getCanvas();
+			if (canvas != null) {
+				Layer l = canvas.getLayer(cp);
+				if (l != null)
+					l.setName("Context Menu");
+			}
+		};
 
 	};
 
 	@Override
 	public void run() {
-		if (instanced) {
-			return;
-		}
-		instanced = true;
-		for (Sequence s : Icy.getMainInterface().getSequences()) {
+		l1: for (Sequence s : Icy.getMainInterface().getSequences()) {
+			for (Painter p : s.getPainters() ){ 
+				if (p instanceof ContextualPainter)
+					continue l1;
+			}
 			ContextualPainter ap = new ContextualPainter();
 			s.addPainter(ap);
 			for (Viewer v : s.getViewers()) {
-				v.getCanvas().getLayer(ap).setName("Contextual");
+				v.getCanvas().getLayer(ap).setName("Context Menu");
 			}
 		}
-		Icy.getMainInterface().addListener(mainadapter);
 	}
 
 	@Override
@@ -66,5 +61,14 @@ public class ContextualPainterMode extends PluginActionable implements PluginDae
 		}
 		Icy.getMainInterface().removeListener(mainadapter);
 		instanced = false;
+	}
+
+	@Override
+	public void init() {
+		if (instanced) {
+			return;
+		}
+		instanced = true;
+		Icy.getMainInterface().addListener(mainadapter);
 	}
 }
